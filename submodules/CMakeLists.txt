@@ -321,13 +321,15 @@ else()
     )
     set_property(TARGET OpenSSL_Target PROPERTY FOLDER "${QUIC_FOLDER_PREFIX}helpers")
 
-    # Define static liboqs library
     find_package(liboqs REQUIRED)
     get_target_property(LIBOQS_INCLUDE_DIR OQS::oqs INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(LIBOQS_LIBRARY_TYPE OQS::oqs TYPE)
 
-    add_library(oqsprovider STATIC IMPORTED)
-    set_target_properties(oqsprovider PROPERTIES IMPORTED_LOCATION ${OQSPROVIDER_PATH})
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    set(OQS_PROVIDER_BUILD_STATIC ON)
+    set(BUILD_SHARED_LIBS OFF)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oqsprovider EXCLUDE_FROM_ALL)
 
     # Target to export to parent project
     add_library(OpenSSLQuic INTERFACE)
