@@ -16,3 +16,9 @@
 	path = submodules/xdp-for-windows
 	url = https://github.com/microsoft/xdp-for-windows.git
 	branch = release/1.0
+[submodule "submodules/liboqs"]
+	path = submodules/liboqs
+	url = https://github.com/open-quantum-safe/liboqs.git
+[submodule "submodules/oqsprovider"]
+	path  = submodules/oqsprovider
+	url = https://github.com/open-quantum-safe/oqs-provider.git

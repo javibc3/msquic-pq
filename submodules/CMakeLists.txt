@@ -175,7 +175,8 @@ else()
 
     set(LIBSSL_PATH ${OPENSSL_DIR}/lib/libssl${CMAKE_STATIC_LIBRARY_SUFFIX})
     set(LIBCRYPTO_PATH ${OPENSSL_DIR}/lib/libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX})
-
+    set(OQSPROVIDER_PATH ${OPENSSL_DIR}/lib/liboqsprovider${CMAKE_STATIC_LIBRARY_SUFFIX})
+    
     # Figure out the default cert directory
     execute_process(
         COMMAND openssl version -d
@@ -320,6 +321,14 @@ else()
     )
     set_property(TARGET OpenSSL_Target PROPERTY FOLDER "${QUIC_FOLDER_PREFIX}helpers")
 
+    # Define static liboqs library
+    find_package(liboqs REQUIRED)
+    get_target_property(LIBOQS_INCLUDE_DIR OQS::oqs INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(LIBOQS_LIBRARY_TYPE OQS::oqs TYPE)
+
+    add_library(oqsprovider STATIC IMPORTED)
+    set_target_properties(oqsprovider PROPERTIES IMPORTED_LOCATION ${OQSPROVIDER_PATH})
+
     # Target to export to parent project
     add_library(OpenSSLQuic INTERFACE)
     add_dependencies(OpenSSLQuic
@@ -328,12 +337,17 @@ else()
         OpenSSLQuic
         INTERFACE
         ${OPENSSL_DIR}/include
+        ${LIBOQS_INCLUDE_DIR}
     )
 
     target_link_libraries(
         OpenSSLQuic
         INTERFACE
+        "-Wl,--whole-archive"
         ${LIBSSL_PATH}
+        OQS::oqs
+        oqsprovider
+        "-Wl,--no-whole-archive"
     )
 
     if (QUIC_USE_SYSTEM_LIBCRYPTO)

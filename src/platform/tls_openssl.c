@@ -23,6 +23,7 @@ Abstract:
 #include "openssl/bio.h"
 #ifdef IS_OPENSSL_3
 #include "openssl/core_names.h"
+#include "openssl/provider.h"
 #else
 #include "openssl/hmac.h"
 #endif
@@ -42,6 +43,11 @@ Abstract:
 #endif
 
 extern EVP_CIPHER *CXPLAT_AES_256_CBC_ALG_HANDLE;
+
+#ifdef IS_OPENSSL_3
+/** \brief The initialization function of oqsprovider. */
+extern OSSL_provider_init_fn oqs_provider_init;
+#endif
 
 uint16_t CxPlatTlsTPHeaderSize = 0;
 
@@ -916,6 +922,67 @@ CxPlatTlsOnServerSessionTicketDecrypted(
 
     return Result;
 }
+#ifdef IS_OPENSSL_3
+static 
+QUIC_STATUS 
+load_oqs_provider(
+    OSSL_LIB_CTX *libctx, 
+    char* kOQSProviderName
+    )
+{
+    OSSL_PROVIDER *provider;
+    int ret;
+
+    ret = OSSL_PROVIDER_available(libctx, kOQSProviderName);
+    if (ret != 0) {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] INFO, %s.",
+            "OQS provider already available");
+            return QUIC_STATUS_SUCCESS;
+    }
+
+    ret = OSSL_PROVIDER_add_builtin(libctx, kOQSProviderName,
+                                    oqs_provider_init);
+    if (ret != 1) {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] ERROR, %s.",
+            "OQS provider not added");
+            return QUIC_STATUS_TLS_ERROR;
+
+    }
+
+    provider = OSSL_PROVIDER_load(libctx, kOQSProviderName);
+    if (provider == NULL) {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] ERROR, %s.",
+            "OQS provider not loaded");
+            return QUIC_STATUS_TLS_ERROR;
+    }
+
+    ret = OSSL_PROVIDER_available(libctx, kOQSProviderName);
+    if (ret != 1) {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] ERROR, %s.",
+            "OQS provider not available");
+            return QUIC_STATUS_TLS_ERROR;
+    }
+
+    ret = OSSL_PROVIDER_self_test(provider);
+    if (ret != 1) {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] ERROR, %s.",
+            "OQS provider self test failed");
+            return QUIC_STATUS_TLS_ERROR;
+    }
+
+    return 0;
+}
+#endif
 
 SSL_QUIC_METHOD OpenSslQuicCallbacks = {
     CxPlatTlsSetEncryptionSecretsCallback,
@@ -1064,6 +1131,15 @@ CxPlatTlsSecConfigCreate(
     X509* X509Cert = NULL;
     EVP_PKEY* PrivateKey = NULL;
     char* CipherSuiteString = NULL;
+
+#ifdef IS_OPENSSL_3
+
+    Status = load_oqs_provider(NULL, "oqsprovider");
+    if (Status != QUIC_STATUS_SUCCESS) {
+        goto Exit;
+    }
+
+#endif
 
     //
     // Create a security config.
