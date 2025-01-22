@@ -1288,6 +1288,32 @@ CxPlatTlsSecConfigCreate(
         goto Exit;
     }
 
+#if defined(IS_OPENSSL_3) && defined(OQS_PROVIDER)
+    char* groupsList = getenv("GROUPS_LIST");
+    if (groupsList == NULL) {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] INFO, %s.",
+            "GROUPS_LIST environment variable is not set");
+    } else if (groupsList[0] == '\0' || groupsList[0] == '\n') {
+        QuicTraceEvent(
+            LibraryError,
+            "[ lib] INFO, %s.",
+            "GROUPS_LIST environment variable is empty or newline");
+    } else {
+        Ret = SSL_CTX_set1_groups_list(SecurityConfig->SSLCtx, groupsList);
+        if (Ret != 1) {
+            QuicTraceEvent(
+                LibraryErrorStatus,
+                "[ lib] ERROR, %u, %s.",
+                ERR_get_error(),
+                "SSL_set1_groups_list failed");
+            Status = QUIC_STATUS_TLS_ERROR;
+            goto Exit;
+        }
+    }
+#endif
+
     if (SecurityConfig->Flags & QUIC_CREDENTIAL_FLAG_USE_TLS_BUILTIN_CERTIFICATE_VALIDATION) {
         Ret = SSL_CTX_set_default_verify_paths(SecurityConfig->SSLCtx);
         if (Ret != 1) {

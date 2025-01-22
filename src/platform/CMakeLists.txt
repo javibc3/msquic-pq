@@ -127,6 +127,7 @@ if (MSVC AND (QUIC_TLS STREQUAL "openssl" OR QUIC_TLS STREQUAL "schannel") AND N
 endif()
 
 if(QUIC_TLS STREQUAL "openssl" OR QUIC_TLS STREQUAL "openssl3")
+    target_compile_definitions(platform PRIVATE OQS_PROVIDER)
     target_link_libraries(platform PUBLIC OpenSSL)
     if (CX_PLATFORM STREQUAL "darwin")
         target_link_libraries(platform PUBLIC "-framework CoreFoundation" "-framework Security")
