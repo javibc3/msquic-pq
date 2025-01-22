@@ -175,7 +175,6 @@ else()
 
     set(LIBSSL_PATH ${OPENSSL_DIR}/lib/libssl${CMAKE_STATIC_LIBRARY_SUFFIX})
     set(LIBCRYPTO_PATH ${OPENSSL_DIR}/lib/libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX})
-    set(OQSPROVIDER_PATH ${OPENSSL_DIR}/lib/liboqsprovider${CMAKE_STATIC_LIBRARY_SUFFIX})
     
     # Figure out the default cert directory
     execute_process(
@@ -321,36 +320,52 @@ else()
     )
     set_property(TARGET OpenSSL_Target PROPERTY FOLDER "${QUIC_FOLDER_PREFIX}helpers")
 
-    find_package(liboqs REQUIRED)
-    get_target_property(LIBOQS_INCLUDE_DIR OQS::oqs INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(LIBOQS_LIBRARY_TYPE OQS::oqs TYPE)
-
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-    set(OQS_PROVIDER_BUILD_STATIC ON)
-    set(BUILD_SHARED_LIBS OFF)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oqsprovider EXCLUDE_FROM_ALL)
-
     # Target to export to parent project
     add_library(OpenSSLQuic INTERFACE)
     add_dependencies(OpenSSLQuic
         OpenSSL_Target)
-    target_include_directories(
-        OpenSSLQuic
-        INTERFACE
-        ${OPENSSL_DIR}/include
-        ${LIBOQS_INCLUDE_DIR}
-    )
 
-    target_link_libraries(
-        OpenSSLQuic
-        INTERFACE
-        "-Wl,--whole-archive"
-        ${LIBSSL_PATH}
-        OQS::oqs
-        oqsprovider
-        "-Wl,--no-whole-archive"
-    )
+    if (QUIC_ENABLE_OQS_PROVIDER)
+        find_package(liboqs REQUIRED)
+        get_target_property(LIBOQS_INCLUDE_DIR OQS::oqs INTERFACE_INCLUDE_DIRECTORIES)
+        get_target_property(LIBOQS_LIBRARY_TYPE OQS::oqs TYPE)
+
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+        set(OQS_PROVIDER_BUILD_STATIC ON)
+        set(BUILD_SHARED_LIBS OFF)
+        add_compile_definitions(OQS_PROVIDER)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oqsprovider EXCLUDE_FROM_ALL)
+
+        target_include_directories(
+            OpenSSLQuic
+            INTERFACE
+            ${OPENSSL_DIR}/include
+            ${LIBOQS_INCLUDE_DIR}
+        )
+
+        target_link_libraries(
+            OpenSSLQuic
+            INTERFACE
+            "-Wl,--whole-archive"
+            ${LIBSSL_PATH}
+            OQS::oqs
+            oqsprovider
+            "-Wl,--no-whole-archive"
+        )
+    else()
+        target_include_directories(
+            OpenSSLQuic
+            INTERFACE
+            ${OPENSSL_DIR}/include
+        )
+
+        target_link_libraries(
+            OpenSSLQuic
+            INTERFACE
+            ${LIBSSL_PATH}
+        )
+    endif()
 
     if (QUIC_USE_SYSTEM_LIBCRYPTO)
         include(FindOpenSSL)

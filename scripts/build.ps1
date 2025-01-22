@@ -90,6 +90,9 @@ This script provides helpers for building msquic.
 .PARAMETER UseSystemOpenSSLCrypto
     Use system provided OpenSSL libcrypto rather then statically linked. Only affects OpenSSL Linux builds
 
+.PARAMETER EnableOqsProvider
+    Enable OQS provider in the build. Only affects OpenSSL Linux builds.
+
 .PARAMETER EnableHighResolutionTimers
     Configures the system to use high resolution timers.
 
@@ -201,6 +204,9 @@ param (
 
     [Parameter(Mandatory = $false)]
     [switch]$UseSystemOpenSSLCrypto = $false,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$EnableOqsProvider = $false,
 
     [Parameter(Mandatory = $false)]
     [switch]$EnableHighResolutionTimers = $false,
@@ -500,6 +506,9 @@ function CMake-Generate {
     }
     if ($UseSystemOpenSSLCrypto) {
         $Arguments += " -DQUIC_USE_SYSTEM_LIBCRYPTO=on"
+    }
+    if($EnableOqsProvider) {
+        $Arguments += " -DQUIC_ENABLE_OQS_PROVIDER=on"
     }
     if ($EnableHighResolutionTimers) {
         $Arguments += " -DQUIC_HIGH_RES_TIMERS=on"

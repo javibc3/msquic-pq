@@ -44,7 +44,7 @@ Abstract:
 
 extern EVP_CIPHER *CXPLAT_AES_256_CBC_ALG_HANDLE;
 
-#ifdef IS_OPENSSL_3
+#if defined(IS_OPENSSL_3) && defined(OQS_PROVIDER)
 /** \brief The initialization function of oqsprovider. */
 extern OSSL_provider_init_fn oqs_provider_init;
 #endif
@@ -922,7 +922,7 @@ CxPlatTlsOnServerSessionTicketDecrypted(
 
     return Result;
 }
-#ifdef IS_OPENSSL_3
+#if defined(IS_OPENSSL_3) && defined(OQS_PROVIDER)
 static 
 QUIC_STATUS 
 load_oqs_provider(
@@ -1132,7 +1132,7 @@ CxPlatTlsSecConfigCreate(
     EVP_PKEY* PrivateKey = NULL;
     char* CipherSuiteString = NULL;
 
-#ifdef IS_OPENSSL_3
+#if defined(IS_OPENSSL_3) && defined(OQS_PROVIDER)
 
     Status = load_oqs_provider(NULL, "oqsprovider");
     if (Status != QUIC_STATUS_SUCCESS) {
