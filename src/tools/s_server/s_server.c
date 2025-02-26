@@ -54,6 +54,11 @@ HQUIC Registration;
 //
 HQUIC Configuration;
 
+//
+// The enviromment variable used to change the curve used in the handshake.
+//
+const char* GroupsListVar = "GROUPS_LIST";
+
 void PrintUsage()
 {
     printf(
@@ -62,7 +67,7 @@ void PrintUsage()
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_server.exe -port:<...> -cert_file:<...> -key_file:<...> [-password:<...>]\n"
+        "  quics_server.exe -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> [-password:<...>]\n"
         );
 }
 
@@ -469,6 +474,11 @@ main(
     _In_reads_(argc) _Null_terminated_ char* argv[]
     )
 {
+    const char* Groups = NULL;
+    if((Groups = GetValue(argc, argv, "groups")) != NULL) {
+        setenv(GroupsListVar, Groups, 1);
+    }
+
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
 
     //

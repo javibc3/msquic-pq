@@ -66,6 +66,11 @@ QUIC_TLS_SECRETS ClientSecrets = {0};
 //
 const char* SslKeyLogEnvVar = "SSLKEYLOGFILE";
 
+//
+// The enviromment variable used to change the curve used in the handshake.
+//
+const char* GroupsListVar = "GROUPS_LIST";
+
 void PrintUsage()
 {
     printf(
@@ -74,7 +79,7 @@ void PrintUsage()
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_client.exe -target:{IPAddress|Hostname} -port:<...> -CAfile:<...> -unsecure -cert_file:<...> -key_file:<...> [-password:<...>]\n"
+        "  quics_client.exe -target:{IPAddress|Hostname} -port:<...> -groups:<...> -CAfile:<...> -unsecure -cert_file:<...> -key_file:<...> [-password:<...>]\n"
         );
 }
 
@@ -644,6 +649,12 @@ main(
     _In_reads_(argc) _Null_terminated_ char* argv[]
     )
 {
+
+    const char* Groups = NULL;
+    if((Groups = GetValue(argc, argv, "groups")) != NULL) {
+        setenv(GroupsListVar, Groups, 1);
+    }
+
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
 
     //

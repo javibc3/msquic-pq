@@ -13,7 +13,7 @@
 // the app (used for persistent storage and for debugging). It also configures
 // the execution profile, using the default "low latency" profile.
 //
-const QUIC_REGISTRATION_CONFIG RegConfig = { "quics_client", QUIC_EXECUTION_PROFILE_LOW_LATENCY };
+const QUIC_REGISTRATION_CONFIG RegConfig = { "quics_time", QUIC_EXECUTION_PROFILE_LOW_LATENCY };
 
 //
 // The protocol name used in the Application Layer Protocol Negotiation (ALPN).
@@ -73,26 +73,19 @@ HQUIC Registration;
 HQUIC Configuration;
 
 //
-// The struct to be filled with TLS secrets
-// for debugging packet captured with e.g. Wireshark.
+// The enviromment variable used to change the curve used in the handshake.
 //
-QUIC_TLS_SECRETS ClientSecrets = {0};
-
-//
-// The name of the environment variable being
-// used to get the path to the ssl key log file.
-//
-const char* SslKeyLogEnvVar = "SSLKEYLOGFILE";
+const char* GroupsListVar = "GROUPS_LIST";
 
 void PrintUsage()
 {
     printf(
         "\n"
-        "quics_time runs a simple benchmark tool implementing a QUIC client measuring the number of connection in a given time to be used with quics_server.\n"
+        "quics_time runs a simple benchmark tool implementing a QUIC client measuring the maximum number of connections in a given time to be used with quics_server.\n"
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_client.exe -time:<...> -target:{IPAddress|Hostname} -port:<...> -CAfile:<...> -unsecure -cert_file:<...> -key_file:<...> [-password:<...>]\n"
+        "  quics_time.exe -time:<...> -target:{IPAddress|Hostname} -port:<...> -groups:<...> -CAfile:<...> -unsecure -cert_file:<...> -key_file:<...> [-password:<...>]\n"
         );
 }
 
@@ -431,6 +424,12 @@ main(
     _In_reads_(argc) _Null_terminated_ char* argv[]
     )
 {
+
+    const char* Groups = NULL;
+    if((Groups = GetValue(argc, argv, "groups")) != NULL) {
+        setenv(GroupsListVar, Groups, 1);
+    }
+
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
 
     //
