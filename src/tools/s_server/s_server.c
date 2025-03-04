@@ -59,6 +59,11 @@ HQUIC Configuration;
 //
 const char* GroupsListVar = "GROUPS_LIST";
 
+//
+// Flag to indicate if the loggers are enabled.
+//
+BOOLEAN VerboseEnabled = FALSE;
+
 void PrintUsage()
 {
     printf(
@@ -67,7 +72,7 @@ void PrintUsage()
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_server.exe -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> [-password:<...>]\n"
+        "  quics_server.exe -verbose -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> [-password:<...>]\n"
         );
 }
 
@@ -221,7 +226,9 @@ ServerConnectionCallback(
         //
         // The handshake has completed for the connection.
         //
-        // printf("[conn][%p] Connected\n", Connection);
+        if(VerboseEnabled){
+            printf("[conn][%p] Connected\n", Connection);
+        }
         // MsQuic->ConnectionSendResumptionTicket(Connection, QUIC_SEND_RESUMPTION_FLAG_NONE, 0, NULL);
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_TRANSPORT:
@@ -231,23 +238,31 @@ ServerConnectionCallback(
         // protocol, since we let idle timeout kill the connection.
         //
         if (Event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status == QUIC_STATUS_CONNECTION_IDLE) {
-            // printf("[conn][%p] Successfully shut down on idle.\n", Connection);
+            if(VerboseEnabled){
+                printf("[conn][%p] Successfully shut down on idle.\n", Connection);
+            }
         } else {
-            // printf("[conn][%p] Shut down by transport, 0x%x\n", Connection, Event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status);
+            if(VerboseEnabled){
+                printf("[conn][%p] Shut down by transport, 0x%x\n", Connection, Event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status);
+            }
         }
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER:
         //
         // The connection was explicitly shut down by the peer.
         //
-        // printf("[conn][%p] Shut down by peer, 0x%llu\n", Connection, (unsigned long long)Event->SHUTDOWN_INITIATED_BY_PEER.ErrorCode);
+        if(VerboseEnabled){
+            printf("[conn][%p] Shut down by peer, 0x%llu\n", Connection, (unsigned long long)Event->SHUTDOWN_INITIATED_BY_PEER.ErrorCode);
+        }
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
         //
         // The connection has completed the shutdown process and is ready to be
         // safely cleaned up.
         //
-        // printf("[conn][%p] All done\n", Connection);
+        if(VerboseEnabled){
+            printf("[conn][%p] All done\n", Connection);
+        }
         MsQuic->ConnectionClose(Connection);
         break;
     case QUIC_CONNECTION_EVENT_PEER_STREAM_STARTED:
@@ -255,7 +270,9 @@ ServerConnectionCallback(
         // The peer has started/created a new stream. The app MUST set the
         // callback handler before returning.
         //
-        // printf("[strm][%p] Peer started\n", Event->PEER_STREAM_STARTED.Stream);
+        if(VerboseEnabled){
+            printf("[strm][%p] Peer started\n", Event->PEER_STREAM_STARTED.Stream);
+        }
         MsQuic->SetCallbackHandler(Event->PEER_STREAM_STARTED.Stream, (void*)ServerStreamCallback, NULL);
         break;
     case QUIC_CONNECTION_EVENT_RESUMED:
@@ -263,7 +280,9 @@ ServerConnectionCallback(
         // The connection succeeded in doing a TLS resumption of a previous
         // connection's session.
         //
-        // printf("[conn][%p] Connection resumed!\n", Connection);
+        if(VerboseEnabled){
+            printf("[conn][%p] Connection resumed!\n", Connection);
+        }
         break;
     default:
         break;
@@ -418,6 +437,10 @@ RunServer(
 {
     QUIC_STATUS Status;
     HQUIC Listener = NULL;
+
+    if(GetFlag(argc, argv, "verbose")) {
+        VerboseEnabled = TRUE;
+    }
 
     //
     // Configures the address used for the listener to listen on all IP

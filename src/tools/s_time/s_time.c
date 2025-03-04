@@ -41,7 +41,7 @@ uint32_t NumConnections = 0;
 //
 // Boolean flag for indicating if a connection has finished.
 //
-BOOLEAN finished = FALSE;
+volatile BOOLEAN Finished = FALSE;
 //
 // The default idle timeout period (1 second) used for the protocol.
 //
@@ -77,6 +77,11 @@ HQUIC Configuration;
 //
 const char* GroupsListVar = "GROUPS_LIST";
 
+//
+// Flag to indicate if the loggers are enabled.
+//
+BOOLEAN VerboseEnabled = FALSE;
+
 void PrintUsage()
 {
     printf(
@@ -85,7 +90,7 @@ void PrintUsage()
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_time.exe -time:<...> -target:{IPAddress|Hostname} -port:<...> -groups:<...> -CAfile:<...> -unsecure -cert_file:<...> -key_file:<...> [-password:<...>]\n"
+        "  quics_time.exe -time:<...> -target:{IPAddress|Hostname} -port:<...> -groups:<...> -CAfile:<...> -unsecure -verbose -cert_file:<...> -key_file:<...> [-password:<...>]\n"
         );
 }
 
@@ -272,13 +277,14 @@ ClientConnectionCallback(
         //
         // The handshake has completed for the connection.
         //
-        // printf("[conn][%p] Connected\n", Connection);
+        if(VerboseEnabled){
+            printf("[conn][%p] Connected\n", Connection);
+        }
         NumConnections++;
 
         // In this sample, the client immediately shuts down the connection after the handshake.
         if(Connection != NULL) {
             MsQuic->ConnectionShutdown(Connection, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
-            finished = TRUE;
         }
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_TRANSPORT:
@@ -288,25 +294,34 @@ ClientConnectionCallback(
         // protocol, since we let idle timeout kill the connection.
         //
         if (Event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status == QUIC_STATUS_CONNECTION_IDLE) {
-            // printf("[conn][%p] Successfully shut down on idle.\n", Connection);
+            if(VerboseEnabled){
+                printf("[conn][%p] Successfully shut down on idle.\n", Connection);
+            }
         } else {
-            // printf("[conn][%p] Shut down by transport, 0x%x\n", Connection, Event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status);
+            if(VerboseEnabled){
+                printf("[conn][%p] Shut down by transport, 0x%x\n", Connection, Event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status);
+            }
         }
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER:
         //
         // The connection was explicitly shut down by the peer.
         //
-        // printf("[conn][%p] Shut down by peer, 0x%llu\n", Connection, (unsigned long long)Event->SHUTDOWN_INITIATED_BY_PEER.ErrorCode);
+        if(VerboseEnabled){
+            printf("[conn][%p] Shut down by peer, 0x%llu\n", Connection, (unsigned long long)Event->SHUTDOWN_INITIATED_BY_PEER.ErrorCode);
+        }
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
         //
         // The connection has completed the shutdown process and is ready to be
         // safely cleaned up.
         //
-        // printf("[conn][%p] All done\n", Connection);
+        if(VerboseEnabled){
+            printf("[conn][%p] All done\n", Connection);
+        }
         if (!Event->SHUTDOWN_COMPLETE.AppCloseInProgress) {
             MsQuic->ConnectionClose(Connection);
+            Finished = TRUE;
         }
         break;
     case QUIC_CONNECTION_EVENT_RESUMPTION_TICKET_RECEIVED:
@@ -314,7 +329,9 @@ ClientConnectionCallback(
         // A resumption ticket (also called New Session Ticket or NST) was
         // received from the server.
         //
-        // printf("[conn][%p] Resumption ticket received (%u bytes):\n", Connection, Event->RESUMPTION_TICKET_RECEIVED.ResumptionTicketLength);
+        if(VerboseEnabled){
+            printf("[conn][%p] Resumption ticket received (%u bytes):\n", Connection, Event->RESUMPTION_TICKET_RECEIVED.ResumptionTicketLength);
+        }
         for (uint32_t i = 0; i < Event->RESUMPTION_TICKET_RECEIVED.ResumptionTicketLength; i++) {
             printf("%.2X", (uint8_t)Event->RESUMPTION_TICKET_RECEIVED.ResumptionTicket[i]);
         }
@@ -470,6 +487,10 @@ main(
             goto Error;
         }
 
+        if(GetFlag(argc, argv, "verbose")) {
+            VerboseEnabled = TRUE;
+        }
+
         if(GetValue(argc, argv, "time") != NULL) {
             MaxTime = strtoul(GetValue(argc, argv, "time"), NULL, 10);
         }
@@ -479,7 +500,7 @@ main(
         printf("Making the maximun number of connections in %ld seconds...\n", MaxTime);
         for(;;){
             if (Finish < time(NULL)) break;
-            finished = FALSE;
+            Finished = FALSE;
 
             //
             // Allocate a new connection object.
@@ -501,7 +522,7 @@ main(
                 }
             }
 
-            while (!finished)
+            while (!Finished)
             {
                 // Waiting loop
             }
