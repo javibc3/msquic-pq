@@ -1,6 +1,7 @@
 #include "msquic.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #ifndef UNREFERENCED_PARAMETER
 #define UNREFERENCED_PARAMETER(P) (void)(P)
@@ -72,7 +73,7 @@ void PrintUsage()
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_server.exe -verbose -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> [-password:<...>]\n"
+        "  quics_server.exe -verbose -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> -verifyCAfile:<...> [-password:<...>]\n"
         );
 }
 
@@ -478,10 +479,17 @@ RunServer(
     }
 
     //
-    // Continue listening for connections until the Enter key is pressed.
+    // Continue listening for connections until Ctrl+C is pressed.
     //
-    printf("Press Enter to exit.\n\n");
-    getchar();
+    printf("Press Control+C to exit.\n\n");
+    
+    // Loop indefinitely until signal is received
+    for (;;) {
+        // Wait for a signal to be received
+        signal(SIGINT, NULL);
+        signal(SIGTERM, NULL);
+        signal(SIGABRT, NULL);
+    }
 
 Error:
 
