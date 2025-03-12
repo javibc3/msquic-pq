@@ -486,9 +486,6 @@ RunServer(
     // Loop indefinitely until signal is received
     for (;;) {
         // Wait for a signal to be received
-        signal(SIGINT, NULL);
-        signal(SIGTERM, NULL);
-        signal(SIGABRT, NULL);
     }
 
 Error:

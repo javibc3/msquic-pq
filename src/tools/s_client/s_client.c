@@ -426,8 +426,10 @@ ClientConnectionCallback(
         QUIC_STATISTICS Stats = {0};
         uint32_t StatsLen = sizeof(Stats);
         if (QUIC_SUCCEEDED(MsQuic->GetParam(Connection, QUIC_PARAM_CONN_STATISTICS, &StatsLen, &Stats))) {
-            printf("[conn][%p] Handshake client bytes : %d\n", Connection, Stats.Handshake.ClientFlight1Bytes + Stats.Handshake.ClientFlight2Bytes);
-            printf("[conn][%p] Handshake server bytes : %d\n", Connection, Stats.Handshake.ServerFlight1Bytes);
+            printf("[conn][%p] SSL handshake has read %d bytes and written %d bytes\n", Connection, Stats.Handshake.ServerFlight1Bytes, (Stats.Handshake.ClientFlight1Bytes + Stats.Handshake.ClientFlight2Bytes));
+        }
+        if(Connection != NULL) {
+            MsQuic->ConnectionShutdown(Connection, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
         }
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_TRANSPORT:
