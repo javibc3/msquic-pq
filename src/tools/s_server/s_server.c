@@ -73,7 +73,7 @@ void PrintUsage()
         "\n"
         "Usage:\n"
         "\n"
-        "  quics_server.exe -verbose -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> -verifyCAfile:<...> [-password:<...>]\n"
+        "  quics_server.exe -verbose -verify -port:<...> -groups:<...> -cert_file:<...> -key_file:<...> -verifyCAfile:<...> [-password:<...>]\n"
         );
 }
 
