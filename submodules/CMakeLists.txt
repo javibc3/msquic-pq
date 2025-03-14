@@ -336,16 +336,16 @@ else()
             COMMAND sed -i "s/false/true/g" oqs-template/generate.yml
             COMMAND env LIBOQS_SRC_DIR=${LIBOQS_SRC_DIR} python3 oqs-template/generate.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/oqsprovider
-            COMMENT "Ejecutando generación de plantillas OQS"
+            COMMENT "Running OQS template generation"
         )
-
-        add_dependencies(OpenSSLQuic generate_oqs)
 
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
         set(OQS_PROVIDER_BUILD_STATIC ON)
         set(BUILD_SHARED_LIBS OFF)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oqsprovider EXCLUDE_FROM_ALL)
+
+        add_dependencies(oqsprovider generate_oqs)
 
         target_include_directories(
             OpenSSLQuic
