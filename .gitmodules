@@ -19,3 +19,6 @@
 [submodule "submodules/oqsprovider"]
 	path = submodules/oqsprovider
 	url = https://github.com/open-quantum-safe/oqs-provider.git
+[submodule "submodules/liboqs"]
+	path = submodules/liboqs
+	url = https://github.com/open-quantum-safe/liboqs.git
