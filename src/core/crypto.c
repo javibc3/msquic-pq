@@ -151,7 +151,7 @@ QuicCryptoInitialize(
         QuicRecvBufferInitialize(
             &Crypto->RecvBuffer,
             InitialRecvBufferLength,
-            QUIC_DEFAULT_STREAM_FC_WINDOW_SIZE / 2,
+            QUIC_DEFAULT_STREAM_FC_WINDOW_SIZE,
             QUIC_RECV_BUF_MODE_SINGLE,
             NULL);
     if (QUIC_FAILED(Status)) {
