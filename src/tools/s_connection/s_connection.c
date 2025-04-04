@@ -304,7 +304,7 @@ ClientConnectionCallback(
         QUIC_STATISTICS Stats = {0};
         uint32_t StatsLen = sizeof(Stats);
         if (QUIC_SUCCEEDED(MsQuic->GetParam(Connection, QUIC_PARAM_CONN_STATISTICS, &StatsLen, &Stats))) {
-            printf("Connection time: %.2fms;\n", (Stats.Timing.HandshakeFlightEnd - Stats.Timing.Start) / 1000.0);
+            printf("Handshake duration: %.2f ms\n", (Stats.Timing.HandshakeFlightEnd - Stats.Timing.Start) / 1000.0);
         }
         if (!Event->SHUTDOWN_COMPLETE.AppCloseInProgress) {
             MsQuic->ConnectionClose(Connection);
